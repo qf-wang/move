@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+    <style>
+        .box {
+            position: absolute;
+            width: 50px;
+            height: 50px;
+            background: red;
+            border-radius: 25px;
+        }
+    
+    </style>
+</head>
+<body>
+    <div class="box"></div>
+    <script src="js/startMove2.0.0.js"></script>
+    <script>
+        var boxSpeed = new StartMove('.box');
+        boxSpeed.move({
+            top: 100,
+            left: 200,
+            width: 200,
+            height: 200,
+            opacity: 40
+        }, function() {
+            boxSpeed.move({top:0, left: 0, opacity: 100, width: 50, height: 50,})
+        })
+    </script>
+</body>
+</html>
