@@ -20,16 +20,11 @@
     <div class="box"></div>
     <script src="js/startMove2.0.0.js"></script>
     <script>
-        var boxSpeed = new StartMove('.box');
-        boxSpeed.move({
-            top: 100,
-            left: 200,
-            width: 200,
-            height: 200,
-            opacity: 40
-        }, function() {
-            boxSpeed.move({top:0, left: 0, opacity: 100, width: 50, height: 50,})
-        })
+        var boxSpeed = new Move('.box');
+        // boxSpeed.changeX(300, 400, function() {
+        //     boxSpeed.changeX(-100, 100);
+        // });
+        boxSpeed.changeMore({left: 300, top: 100, width: 200, height: 200});
     </script>
 </body>
 </html>
