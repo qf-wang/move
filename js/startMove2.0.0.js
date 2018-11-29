@@ -1,102 +1,83 @@
-function Move(ele) {
-    this.$ele = document.querySelector(ele);
-
-}
-// 通用函数，多属性修改，指定时间，匀速运动
-Move.prototype.changeMore = function (attrObj, time, callback) {
-    time = time || 400;
-    var _this = this;
-    const speedObj = {}
-    clearInterval(this.$ele.timer);
-    // 给每一个属性设置一个速度
-    for (let attr in attrObj) {
-        // （目标值 - 初始值） / 时间 
-        let _attr = parseFloat(this.getStyle(attr));
-        attr === 'opacity' ? _attr *= 100 : _attr;
-        speedObj[attr] = (attrObj[attr] - _attr) / (time / 10)
+function getStyle(ele, attr) {
+    if(window.getComputedStyle) {
+        return window.getComputedStyle(ele, false)[attr];
     }
-
-    this.$ele.timer = setInterval(function () {
-        var flag = true;
-        // 分别修改每一个属性
-        for (let attr in attrObj) {
-            // 获取目标值
-            target = attrObj[attr];
-            // 获取速度
-            var speed = speedObj[attr];
-            // 获取初始值
-            var _flag = _this.changeAttr(target, attr,speed);
-            if(!_flag) {
-                flag = false;
-            }
+    return ele.currentStyle[attr];
+}
+class StartMove {
+    constructor(ele) {
+        if (typeof ele == 'string') {
+            ele = document.querySelector(ele);
         }
-        _this.stop(callback, flag);
-    }, 10)
-}
-
-Move.prototype.stop = function(callback, flag) {
-    var _this = this;
-    flag = flag && true;
-    if (flag) {
-        clearInterval(_this.$ele.timer);
-        if (typeof callback == 'function') {
-            callback();
-        }
-
+        this.$ele = ele;
     }
-}
-//  单属性修改
-Move.prototype.changeSingle = function (target, attr, time, callback) {
-    var _this = this;
-    clearInterval(this.$ele.timer);
-
-    var init = parseFloat(this.getStyle(attr));
-    if (attr == 'opacity') {
-        init *= 100;
-    }
-    var speed = (target - init) / (time / 10);
-    var flag;
-    this.$ele.timer = setInterval(function () {
-        flag = _this.changeAttr(target, attr, speed);
-        _this.stop(callback, flag);
-    }, 10)
-
-}
-// 返回false,证明该属性还没有到达目标值
-// 返回true,证明该属性已经到达目标值
-Move.prototype.changeAttr = function (target, attr, speed) {
-    var flag = false
     // 获取初始值
-    var init = parseFloat(this.getStyle(attr));
-    attr == 'opacity' ? init *= 100 : init;
-    init += speed;
-    if ((speed >= 0 && init >= target) || (init <= target && speed <= 0)) {
-        init = target;
-        flag = true;
-        // 到达目标值
+    getinitVal(attr) {
+        var attrVal = getStyle(this.$ele, attr);
+        if (attr == 'opacity') {
+            attrVal *= 100;
+        }
+        attrVal = parseFloat(attrVal);
+        return attrVal;
     }
-
-    attr == 'opacity' ? init /= 100 : init += 'px';
-    this.$ele.style[attr] = init
-    return flag;
-
-}
-// distance传入正直向右运动,传入负值像左运动
-Move.prototype.changeX = function (distance, time, callback) {
-    // 获取初始值进行修改
-    var init = parseFloat(this.getStyle('left'));
-    var target = init + distance;
-    this.changeSingle(target, 'left', time, callback);
-
-}
-Move.prototype.changeY = function (distance, time, callback) {
-    var init = parseFloat(this.getStyle('top'));
-    var target = init + distance;
-    this.changeSingle(target, 'top', time, callback);
-}
-Move.prototype.getStyle = function (attr) {
-    if (window.getComputedStyle) {
-        return window.getComputedStyle(this.$ele, false)[attr];
+    // 单属性改变值
+    oneAttrMove(attr, speed, target) {
+        var flag = true;
+        var attrVal = this.getinitVal(attr);
+        attrVal += speed;
+        if ((speed >= 0 && attrVal >= target) || (speed <= 0 && attrVal <= target)) {
+            attrVal = target;
+        } else {
+            flag = false
+        }
+        if (attr == 'opacity') {
+            this.$ele.style[attr] = attrVal / 100;
+        } else {
+            this.$ele.style[attr] = attrVal + 'px';
+        }
+        return flag;
     }
-    return this.$ele.currentStyle[attr];
+    stop() {
+        clearInterval(this.$ele.timer);
+    }
+    // 多属性运动
+    animate(targetObj, time = 200) {
+        // 确保是dom对象以后, 在清除定时器
+        clearInterval(this.$ele.timer);
+        // 获取每个属性的速度
+        var speedObj = {};
+        for (var attr in targetObj) {
+            // 获取初始值
+            var attrVal = this.getinitVal(attr);
+            var speed = (targetObj[attr] - attrVal) / (time / 10);
+            speedObj[attr] = speed.toFixed(2) - 0;
+        }
+        console.log(speedObj);
+        return new Promise((resolve, reject) => {
+            this.$ele.timer = setInterval(_ => {
+                var flag = true;
+                for (var attr in targetObj) {
+                    var _flag = this.oneAttrMove(attr, speedObj[attr], targetObj[attr]);
+                    if (!_flag)
+                        flag = false;
+                }
+                if (flag) {
+                    clearInterval(this.$ele.timer);
+                    // 目标已到达指定位置, 请指示
+                    console.log('目标已到达指定位置, 请指示');
+                    // 把当前运动对象返回
+                    resolve(this);
+                }
+            }, 10)
+
+        })
+    }
+    // 运动距离
+    animateTo(distanceObj, time) {
+        // 对象中是运动的距离, 加上初始值,就会变成目标值
+        for (var attr in distanceObj) {
+            distanceObj[attr] += this.getinitVal(attr);
+        }
+        return this.animate(distanceObj, time);
+    }
 }
